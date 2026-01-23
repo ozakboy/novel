@@ -188,7 +188,7 @@ def save_chapter(chapter_num, title, content, output_dir):
     # 清理內容
     content = clean_content(content, title)
 
-    filename = f"chapter_{chapter_num:03d}.md"
+    filename = f"chapter_{chapter_num:04d}.md"
     filepath = os.path.join(output_dir, filename)
 
     markdown_content = f"""# 第 {chapter_num} 篇
@@ -204,6 +204,39 @@ def save_chapter(chapter_num, title, content, output_dir):
     print(f"  已保存: {filename}")
 
 
+def get_all_chapters():
+    """獲取所有章節列表"""
+    all_chapters = []
+
+    # 章節分頁列表 (每100章一頁)
+    page_ranges = [
+        (0, 100), (100, 200), (200, 300), (300, 400), (400, 500),
+        (500, 600), (600, 700), (700, 800), (800, 900), (900, 1000),
+        (1000, 1100), (1100, 1200), (1200, 1300), (1300, 1400), (1400, 1500),
+        (1500, 1600), (1600, 1700), (1700, 1800), (1800, 1900), (1900, 2000),
+        (2000, 2100), (2100, 2200), (2200, 2300), (2300, 2400), (2400, 2500),
+        (2500, 2600), (2600, 2700), (2700, 2800), (2800, 2900), (2900, 3000),
+        (3000, 3100), (3100, 3200), (3200, 3300), (3300, 3400), (3400, 3500),
+        (3500, 3600), (3600, 3700), (3700, 3800), (3800, 3900), (3900, 4000),
+        (4000, 4100), (4100, 4200), (4200, 4300), (4300, 4400), (4400, 4500),
+        (4500, 4600), (4600, 4700), (4700, 4800), (4800, 4900), (4900, 5000),
+        (5000, 5100), (5100, 5200), (5200, 5300), (5300, 5400), (5400, 5500),
+        (5500, 5600), (5600, 5700), (5700, 5800), (5800, 5900), (5900, 6000),
+        (6000, 6100), (6100, 6200), (6200, 6300), (6300, 6400), (6400, 6500),
+        (6500, 6600), (6600, 6700), (6700, 6800), (6800, 6900), (6900, 7000),
+        (7000, 7100), (7100, 7200), (7200, 7228),
+    ]
+
+    for start, end in page_ranges:
+        chapters = get_chapter_list(start, end)
+        if chapters:
+            all_chapters.extend(chapters)
+            print(f"  已獲取 {start}-{end} 章節列表，共 {len(chapters)} 章")
+        time.sleep(0.5)  # 延遲避免請求過快
+
+    return all_chapters
+
+
 def main():
     """主函數"""
     # 創建輸出目錄
@@ -211,27 +244,37 @@ def main():
         os.makedirs(OUTPUT_DIR)
 
     # 設定要爬取的章節範圍
-    START_CHAPTER = 0   # 從第幾篇開始 (0-based)
-    END_CHAPTER = 11    # 爬取到第幾篇 (不包含)
+    START_CHAPTER = 11     # 從第幾篇開始 (0-based，11表示從第12章開始，因為0-10已有)
+    END_CHAPTER = 7300     # 爬取到第幾篇 (不包含)
 
-    print(f"開始爬取《帝霸》小說，章節 {START_CHAPTER} 到 {END_CHAPTER-1}")
+    print(f"開始爬取《帝霸》小說，章節 {START_CHAPTER} 到最新")
     print(f"輸出目錄: {OUTPUT_DIR}/")
     print("-" * 50)
 
-    # 獲取章節列表
-    chapters = get_chapter_list(0, 100)
+    # 獲取所有章節列表
+    print("正在獲取所有章節列表...")
+    chapters = get_all_chapters()
 
     if not chapters:
         print("錯誤: 無法獲取章節列表")
         return
 
-    print(f"找到 {len(chapters)} 個章節")
+    print(f"\n總共找到 {len(chapters)} 個章節")
     print("-" * 50)
 
     # 爬取指定範圍的章節
-    for i in range(START_CHAPTER, min(END_CHAPTER, len(chapters))):
+    total = min(END_CHAPTER, len(chapters))
+    for i in range(START_CHAPTER, total):
         chapter = chapters[i]
-        print(f"\n[{i}/{END_CHAPTER-1}] {chapter['name']}")
+
+        # 檢查文件是否已存在
+        filename = f"chapter_{i:04d}.md"
+        filepath = os.path.join(OUTPUT_DIR, filename)
+        if os.path.exists(filepath):
+            print(f"[{i}/{total-1}] {chapter['name']} - 已存在，跳過")
+            continue
+
+        print(f"\n[{i}/{total-1}] {chapter['name']}")
 
         try:
             content = get_chapter_content(chapter['url'])
@@ -242,11 +285,15 @@ def main():
                 print(f"  警告: 內容過短或為空，跳過")
 
             # 延遲，避免請求過快
-            time.sleep(1)
+            time.sleep(0.8)
 
         except Exception as e:
             print(f"  錯誤: {e}")
             continue
+
+        # 每100章輸出一次進度
+        if (i + 1) % 100 == 0:
+            print(f"\n*** 已完成 {i + 1} 章 ***\n")
 
     print("\n" + "=" * 50)
     print("爬取完成！")
