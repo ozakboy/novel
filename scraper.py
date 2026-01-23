@@ -244,7 +244,7 @@ def main():
         os.makedirs(OUTPUT_DIR)
 
     # 設定要爬取的章節範圍
-    START_CHAPTER = 2216   # 從第幾篇開始 (已完成0-2215)
+    START_CHAPTER = 6970   # 從第幾篇開始 (已完成0-6969)
     END_CHAPTER = 7300     # 爬取到第幾篇 (不包含)
 
     print(f"開始爬取《帝霸》小說，章節 {START_CHAPTER} 到最新")
