@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>小說書架</title>
+<meta name="description" content="快速閱讀小說的個人書架">
+<meta name="theme-color" content="#1a1a2e">
+<link rel="manifest" href="site.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<style>
+:root{
+  --bg:#f6f3ec; --card:#ffffff; --text:#2b2b33; --muted:#8a8a96;
+  --accent:#5b5bd6; --accent-text:#ffffff; --border:#e5e0d5;
+  --reader-bg:#f6f3ec; --reader-text:#2b2b33;
+  --safe-top:env(safe-area-inset-top,0px); --safe-bottom:env(safe-area-inset-bottom,0px);
+}
+[data-theme="dark"]{
+  --bg:#14141c; --card:#1e1e29; --text:#d8d8e0; --muted:#77778a;
+  --accent:#7b7bec; --border:#2b2b3a;
+  --reader-bg:#14141c; --reader-text:#c8c8d2;
+}
+[data-theme="sepia"]{
+  --bg:#f0e5d0; --card:#f8f1e3; --text:#4a3b28; --muted:#9a8a70;
+  --accent:#8a6d3b; --border:#ddd0b8;
+  --reader-bg:#f0e5d0; --reader-text:#443723;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{height:100%}
+body{
+  min-height:100%; background:var(--bg); color:var(--text);
+  font-family:"PingFang TC","Microsoft JhengHei","Noto Sans TC",system-ui,sans-serif;
+  transition:background .2s,color .2s;
+}
+a{color:inherit;text-decoration:none}
+button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
+.hidden{display:none!important}
+
+/* 頂欄 */
+header{
+  position:sticky;top:0;z-index:10;background:var(--bg);
+  padding:calc(10px + var(--safe-top)) 14px 10px;
+  display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border);
+}
+header .back{font-size:22px;line-height:1;padding:4px 8px;border-radius:8px}
+header .back:active{background:var(--border)}
+header h1{font-size:17px;font-weight:600;flex:1;min-width:0;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+header .icon-btn{font-size:18px;padding:6px 8px;border-radius:8px}
+header .icon-btn:active{background:var(--border)}
+
+main{max-width:760px;margin:0 auto;padding:14px;padding-bottom:calc(24px + var(--safe-bottom))}
+
+/* 首頁 */
+.continue-card{
+  display:block;background:var(--accent);color:var(--accent-text);
+  border-radius:14px;padding:14px 16px;margin-bottom:16px;
+}
+.continue-card .label{font-size:12px;opacity:.8;margin-bottom:4px}
+.continue-card .title{font-size:15px;font-weight:600}
+.novel-card{
+  display:flex;align-items:center;gap:14px;background:var(--card);
+  border:1px solid var(--border);border-radius:14px;padding:14px 16px;margin-bottom:12px;
+}
+.novel-card .cover{
+  width:48px;height:64px;border-radius:8px;background:var(--accent);color:#fff;
+  display:flex;align-items:center;justify-content:center;
+  font-size:20px;font-weight:700;flex-shrink:0;
+  writing-mode:vertical-rl;letter-spacing:2px;
+}
+.novel-card .info{flex:1;min-width:0}
+.novel-card .name{font-size:16px;font-weight:600;margin-bottom:4px}
+.novel-card .meta{font-size:12px;color:var(--muted)}
+.empty{color:var(--muted);text-align:center;padding:48px 0;font-size:14px}
+
+/* 卷/章節列表 */
+.vol-tabs{display:flex;gap:8px;overflow-x:auto;padding:2px 0 12px;-webkit-overflow-scrolling:touch}
+.vol-tabs button{
+  flex-shrink:0;padding:7px 14px;border-radius:999px;font-size:13px;
+  background:var(--card);border:1px solid var(--border);color:var(--muted);
+}
+.vol-tabs button.active{background:var(--accent);border-color:var(--accent);color:#fff}
+.search-box{
+  width:100%;padding:9px 14px;border-radius:10px;border:1px solid var(--border);
+  background:var(--card);color:var(--text);font-size:14px;margin-bottom:12px;outline:none;
+}
+.chapter-list{list-style:none}
+.chapter-list a{
+  display:block;padding:11px 12px;border-bottom:1px solid var(--border);
+  font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.chapter-list a:active{background:var(--card)}
+.chapter-list a.last-read{color:var(--accent);font-weight:600}
+.list-note{font-size:12px;color:var(--muted);padding:8px 2px}
+
+/* 閱讀器 */
+#view-reader{background:var(--reader-bg)}
+.reader-body{
+  max-width:720px;margin:0 auto;color:var(--reader-text);
+  font-size:var(--fs,18px);line-height:var(--lh,1.9);
+  padding:8px 4px 40vh;
+}
+.reader-body h1{font-size:1.15em;margin:1.2em 0 .6em;text-align:center}
+.reader-body h2{font-size:1.2em;margin:1.6em 0 .8em}
+.reader-body h3{font-size:1.05em;margin:1.2em 0 .6em}
+.reader-body p{margin:0 0 1em;text-align:justify}
+.reader-body hr{border:none;border-top:1px solid var(--border);margin:1.5em 0}
+.reader-nav{
+  display:flex;gap:10px;max-width:720px;margin:24px auto 0;
+}
+.reader-nav button{
+  flex:1;padding:12px;border-radius:12px;background:var(--card);
+  border:1px solid var(--border);font-size:14px;
+}
+.reader-nav button:disabled{opacity:.4}
+.loading{text-align:center;color:var(--muted);padding:60px 0}
+
+/* 閱讀設定面板 */
+#settings{
+  position:fixed;left:0;right:0;bottom:0;z-index:20;
+  background:var(--card);border-top:1px solid var(--border);
+  border-radius:16px 16px 0 0;padding:18px 18px calc(18px + var(--safe-bottom));
+  transform:translateY(110%);transition:transform .25s;
+  max-width:760px;margin:0 auto;box-shadow:0 -6px 30px rgba(0,0,0,.15);
+}
+#settings.open{transform:translateY(0)}
+#settings .row{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+#settings .row:last-child{margin-bottom:0}
+#settings .row>span{font-size:13px;color:var(--muted);width:52px;flex-shrink:0}
+#settings .seg{display:flex;gap:8px;flex:1}
+#settings .seg button{
+  flex:1;padding:9px 0;border-radius:10px;border:1px solid var(--border);
+  background:var(--bg);font-size:14px;
+}
+#settings .seg button.active{background:var(--accent);border-color:var(--accent);color:#fff}
+#scrim{position:fixed;inset:0;z-index:15;background:rgba(0,0,0,.3);opacity:0;
+  pointer-events:none;transition:opacity .25s}
+#scrim.open{opacity:1;pointer-events:auto}
+</style>
+</head>
+<body>
+
+<header>
+  <button class="back hidden" id="btn-back" aria-label="返回">‹</button>
+  <h1 id="page-title">小說書架</h1>
+  <button class="icon-btn hidden" id="btn-toc" aria-label="目錄">☰</button>
+  <button class="icon-btn" id="btn-settings" aria-label="設定">Aa</button>
+</header>
+
+<main>
+  <div id="view-home">
+    <a class="continue-card hidden" id="continue-card" href="#">
+      <div class="label">繼續閱讀</div>
+      <div class="title" id="continue-title"></div>
+    </a>
+    <div id="novel-list"><div class="loading">載入書架中…</div></div>
+  </div>
+
+  <div id="view-novel" class="hidden">
+    <div class="vol-tabs" id="vol-tabs"></div>
+    <input class="search-box" id="chapter-search" type="search" placeholder="搜尋章節標題…">
+    <div class="list-note" id="chapter-count"></div>
+    <ul class="chapter-list" id="chapter-list"></ul>
+  </div>
+
+  <div id="view-reader" class="hidden">
+    <div class="reader-body" id="reader-body"></div>
+    <div class="reader-nav">
+      <button id="btn-prev">‹ 上一章</button>
+      <button id="btn-next">下一章 ›</button>
+    </div>
+  </div>
+</main>
+
+<div id="scrim"></div>
+<div id="settings">
+  <div class="row"><span>字級</span>
+    <div class="seg" id="seg-fs">
+      <button data-fs="16">小</button><button data-fs="18">中</button>
+      <button data-fs="21">大</button><button data-fs="24">特大</button>
+    </div>
+  </div>
+  <div class="row"><span>行距</span>
+    <div class="seg" id="seg-lh">
+      <button data-lh="1.7">緊</button><button data-lh="1.9">適中</button><button data-lh="2.2">鬆</button>
+    </div>
+  </div>
+  <div class="row"><span>主題</span>
+    <div class="seg" id="seg-theme">
+      <button data-theme="light">亮</button><button data-theme="sepia">米黃</button><button data-theme="dark">暗</button>
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+const $=id=>document.getElementById(id);
+const store={
+  get(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}},
+  set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+};
+
+/* ---------- 外觀設定 ---------- */
+const prefs=store.get("nr:prefs",{fs:18,lh:1.9,theme:matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"});
+function applyPrefs(){
+  document.documentElement.dataset.theme=prefs.theme;
+  document.documentElement.style.setProperty("--fs",prefs.fs+"px");
+  document.documentElement.style.setProperty("--lh",prefs.lh);
+  document.querySelector('meta[name="theme-color"]').content=
+    prefs.theme==="dark"?"#14141c":prefs.theme==="sepia"?"#f0e5d0":"#f6f3ec";
+  for(const[seg,key]of[["seg-fs","fs"],["seg-lh","lh"],["seg-theme","theme"]])
+    $(seg).querySelectorAll("button").forEach(b=>
+      b.classList.toggle("active",String(b.dataset[key==="fs"?"fs":key==="lh"?"lh":"theme"])===String(prefs[key])));
+  store.set("nr:prefs",prefs);
+}
+$("seg-fs").addEventListener("click",e=>{if(e.target.dataset.fs){prefs.fs=+e.target.dataset.fs;applyPrefs()}});
+$("seg-lh").addEventListener("click",e=>{if(e.target.dataset.lh){prefs.lh=+e.target.dataset.lh;applyPrefs()}});
+$("seg-theme").addEventListener("click",e=>{if(e.target.dataset.theme){prefs.theme=e.target.dataset.theme;applyPrefs()}});
+$("btn-settings").addEventListener("click",()=>{$("settings").classList.toggle("open");$("scrim").classList.toggle("open")});
+$("scrim").addEventListener("click",()=>{$("settings").classList.remove("open");$("scrim").classList.remove("open")});
+applyPrefs();
+
+/* ---------- 資料 ---------- */
+let manifest=null;
+async function loadManifest(){
+  if(manifest)return manifest;
+  const r=await fetch("manifest.json");
+  if(!r.ok)throw new Error("manifest.json 載入失敗");
+  manifest=await r.json();
+  return manifest;
+}
+const findNovel=name=>manifest&&manifest.novels.find(n=>n.name===name);
+
+/* ---------- 路由 ---------- */
+function nav(hash){location.hash=hash}
+function parseHash(){
+  const parts=location.hash.replace(/^#\/?/,"").split("/").map(decodeURIComponent).filter(s=>s!=="");
+  if(parts[0]==="novel"&&parts[1])return{view:"novel",novel:parts[1],volume:parts[2]||null};
+  if(parts[0]==="read"&&parts[3])return{view:"reader",novel:parts[1],volume:parts[2],file:parts[3]};
+  return{view:"home"};
+}
+window.addEventListener("hashchange",render);
+
+function show(view){
+  for(const v of["home","novel","reader"])$("view-"+v).classList.toggle("hidden",v!==view);
+  $("btn-back").classList.toggle("hidden",view==="home");
+  $("btn-toc").classList.toggle("hidden",view!=="reader");
+}
+$("btn-back").addEventListener("click",()=>{
+  const s=parseHash();
+  if(s.view==="reader")nav("#/novel/"+encodeURIComponent(s.novel)+"/"+encodeURIComponent(s.volume));
+  else nav("#/");
+});
+$("btn-toc").addEventListener("click",()=>{
+  const s=parseHash();
+  if(s.view==="reader")nav("#/novel/"+encodeURIComponent(s.novel)+"/"+encodeURIComponent(s.volume));
+});
+
+/* ---------- 首頁 ---------- */
+function renderHome(){
+  show("home");
+  $("page-title").textContent="小說書架";
+  const last=store.get("nr:lastRead",null);
+  if(last){
+    $("continue-card").classList.remove("hidden");
+    $("continue-card").href="#/read/"+[last.novel,last.volume,last.file].map(encodeURIComponent).join("/");
+    $("continue-title").textContent=last.novel+" · "+last.title;
+  }
+  const list=$("novel-list");
+  if(!manifest){list.innerHTML='<div class="loading">載入書架中…</div>';return}
+  if(!manifest.novels.length){list.innerHTML='<div class="empty">還沒有小說,把小說資料夾放進倉庫即可。</div>';return}
+  list.innerHTML=manifest.novels.map(n=>
+    '<a class="novel-card" href="#/novel/'+encodeURIComponent(n.name)+'">'+
+      '<div class="cover">'+esc(n.name.slice(0,2))+'</div>'+
+      '<div class="info"><div class="name">'+esc(n.name)+'</div>'+
+      '<div class="meta">'+n.volumes.length+' 個分卷 · '+n.chapterCount+' 個章節檔</div></div>'+
+    '</a>').join("");
+}
+
+/* ---------- 章節列表 ---------- */
+let curNovel=null,curVolume=null;
+function renderNovel(state){
+  const novel=findNovel(state.novel);
+  if(!novel){nav("#/");return}
+  show("novel");
+  $("page-title").textContent=novel.name;
+  const progress=store.get("nr:progress:"+novel.name,null);
+  curNovel=novel;
+  curVolume=novel.volumes.find(v=>v.name===state.volume)
+    ||(progress&&novel.volumes.find(v=>v.name===progress.volume))
+    ||novel.volumes[0];
+  $("vol-tabs").innerHTML=novel.volumes.map(v=>
+    '<button data-vol="'+esc(v.name)+'"'+(v===curVolume?' class="active"':'')+'>'+esc(v.name)+'</button>').join("");
+  $("chapter-search").value="";
+  renderChapterList("");
+  const el=$("chapter-list").querySelector(".last-read");
+  if(el)el.scrollIntoView({block:"center"});
+}
+$("vol-tabs").addEventListener("click",e=>{
+  const v=e.target.dataset.vol;
+  if(v)nav("#/novel/"+encodeURIComponent(curNovel.name)+"/"+encodeURIComponent(v));
+});
+$("chapter-search").addEventListener("input",e=>renderChapterList(e.target.value.trim()));
+function renderChapterList(filter){
+  const progress=store.get("nr:progress:"+curNovel.name,null);
+  const lastFile=progress&&progress.volume===curVolume.name?progress.file:null;
+  const chapters=filter?curVolume.chapters.filter(c=>c.title.includes(filter)||c.file.includes(filter)):curVolume.chapters;
+  $("chapter-count").textContent=curVolume.name+" · "+chapters.length+" 章";
+  $("chapter-list").innerHTML=chapters.map(c=>
+    '<li><a'+(c.file===lastFile?' class="last-read"':'')+' href="#/read/'+
+    [curNovel.name,curVolume.name,c.file].map(encodeURIComponent).join("/")+'">'+
+    esc(c.title)+(c.file===lastFile?" ・上次讀到":"")+'</a></li>').join("");
+}
+
+/* ---------- 閱讀器 ---------- */
+function esc(s){return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}
+function mdToHtml(md){
+  const out=[];
+  let lastHeading=null;
+  for(const raw of md.split(/\r?\n/)){
+    const line=raw.trim();
+    if(!line)continue;
+    let h=null;
+    if(line.startsWith("### "))h=[3,line.slice(4).trim()];
+    else if(line.startsWith("## "))h=[2,line.slice(3).trim()];
+    else if(line.startsWith("# "))h=[1,line.slice(2).trim()];
+    if(h){out.push("<h"+h[0]+">"+esc(h[1])+"</h"+h[0]+">");lastHeading=h[1];continue}
+    if(/^(-{3,}|\*{3,})$/.test(line)){out.push("<hr>");continue}
+    // 原始檔常在標題後重複一行標題文字,略過
+    if(line===lastHeading){lastHeading=null;continue}
+    lastHeading=null;
+    out.push("<p>"+esc(line)+"</p>");
+  }
+  return out.join("");
+}
+let readerState=null,scrollSaveTimer=null;
+async function renderReader(state){
+  const novel=findNovel(state.novel);
+  const volume=novel&&novel.volumes.find(v=>v.name===state.volume);
+  const idx=volume?volume.chapters.findIndex(c=>c.file===state.file):-1;
+  if(idx<0){nav("#/");return}
+  const chapter=volume.chapters[idx];
+  show("reader");
+  readerState={novel,volume,idx,chapter};
+  $("page-title").textContent=chapter.title;
+  $("btn-prev").disabled=false;$("btn-next").disabled=false;
+  const volIdx=novel.volumes.indexOf(volume);
+  if(idx===0&&volIdx===0)$("btn-prev").disabled=true;
+  if(idx===volume.chapters.length-1&&volIdx===novel.volumes.length-1)$("btn-next").disabled=true;
+  const body=$("reader-body");
+  body.innerHTML='<div class="loading">章節載入中…</div>';
+  const url=[novel.name,volume.name,chapter.file].map(encodeURIComponent).join("/");
+  let md;
+  try{
+    const r=await fetch(url);
+    if(!r.ok)throw new Error(r.status);
+    md=await r.text();
+  }catch(e){
+    body.innerHTML='<div class="loading">載入失敗,請檢查網路後重試。</div>';
+    return;
+  }
+  // 使用者可能在載入期間已切到別章
+  if(!readerState||readerState.chapter!==chapter)return;
+  body.innerHTML=mdToHtml(md);
+  const saved=store.get("nr:progress:"+novel.name,null);
+  const ratio=(saved&&saved.volume===volume.name&&saved.file===chapter.file)?saved.ratio||0:0;
+  requestAnimationFrame(()=>scrollTo(0,ratio*Math.max(0,document.documentElement.scrollHeight-innerHeight)));
+  saveProgress(ratio);
+}
+function saveProgress(ratio){
+  if(!readerState)return;
+  const{novel,volume,chapter}=readerState;
+  const rec={novel:novel.name,volume:volume.name,file:chapter.file,title:chapter.title,ratio,ts:Date.now()};
+  store.set("nr:progress:"+novel.name,rec);
+  store.set("nr:lastRead",rec);
+}
+window.addEventListener("scroll",()=>{
+  if(!readerState||$("view-reader").classList.contains("hidden"))return;
+  clearTimeout(scrollSaveTimer);
+  scrollSaveTimer=setTimeout(()=>{
+    const max=Math.max(1,document.documentElement.scrollHeight-innerHeight);
+    saveProgress(Math.min(1,Math.max(0,scrollY/max)));
+  },400);
+},{passive:true});
+function step(dir){
+  if(!readerState)return;
+  const{novel,volume,idx}=readerState;
+  let vIdx=novel.volumes.indexOf(volume),cIdx=idx+dir;
+  let vol=volume;
+  if(cIdx<0){if(--vIdx<0)return;vol=novel.volumes[vIdx];cIdx=vol.chapters.length-1}
+  else if(cIdx>=volume.chapters.length){if(++vIdx>=novel.volumes.length)return;vol=novel.volumes[vIdx];cIdx=0}
+  nav("#/read/"+[novel.name,vol.name,vol.chapters[cIdx].file].map(encodeURIComponent).join("/"));
+}
+$("btn-prev").addEventListener("click",()=>step(-1));
+$("btn-next").addEventListener("click",()=>step(1));
+
+/* ---------- 啟動 ---------- */
+function render(){
+  const state=parseHash();
+  scrollTo(0,0);
+  if(state.view==="novel")renderNovel(state);
+  else if(state.view==="reader")renderReader(state);
+  else renderHome();
+}
+loadManifest().then(render).catch(()=>{
+  $("novel-list").innerHTML='<div class="empty">書目載入失敗:找不到 manifest.json。<br>請先執行 scripts/build_manifest.py。</div>';
+  show("home");
+});
+
+if("serviceWorker"in navigator)
+  addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
+</script>
+</body>
+</html>
